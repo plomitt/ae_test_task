@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class YrWeatherClient:
-    """Client for fetching weather data from yr.no API."""
+    """Async client for fetching weather data from yr.no API."""
 
     def __init__(self, base_url: str = YR_API_BASE_URL, user_agent: str = USER_AGENT):
         """Initialize the weather client.
@@ -24,12 +24,12 @@ class YrWeatherClient:
         """
         self.base_url = base_url
         self.user_agent = user_agent
-        self.client = httpx.Client(
+        self.client = httpx.AsyncClient(
             headers={"User-Agent": self.user_agent},
             timeout=30.0
         )
 
-    def get_weather_forecast(self, lat: float, lon: float) -> Dict[str, Any]:
+    async def get_weather_forecast(self, lat: float, lon: float) -> Dict[str, Any]:
         """Fetch weather forecast for given coordinates.
 
         Args:
@@ -54,7 +54,7 @@ class YrWeatherClient:
         logger.info(f"Fetching forecast for lat={lat}, lon={lon}")
 
         try:
-            response = self.client.get(url, params=params)
+            response = await self.client.get(url, params=params)
             response.raise_for_status()
 
             data = response.json()
@@ -79,14 +79,14 @@ class YrWeatherClient:
             logger.error(f"Unexpected error fetching forecast: {e}")
             raise
 
-    def close(self):
-        """Close the HTTP client."""
-        self.client.close()
+    async def aclose(self):
+        """Close the async HTTP client."""
+        await self.client.aclose()
 
-    def __enter__(self):
-        """Context manager entry."""
+    async def __aenter__(self):
+        """Async context manager entry."""
         return self
 
-    def __exit__(self):
-        """Context manager exit."""
-        self.close()
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit."""
+        await self.aclose()

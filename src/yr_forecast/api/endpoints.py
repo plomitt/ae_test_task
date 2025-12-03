@@ -74,8 +74,8 @@ async def get_weather_forecast(
     try:
         logger.info(f"Getting forecast for lat={lat}, lon={lon}, city={city}")
 
-        with weather_service:
-            forecast = weather_service.get_daily_temperatures(
+        async with weather_service:
+            forecast = await weather_service.get_daily_temperatures(
                 lat=lat,
                 lon=lon,
                 city=city,
