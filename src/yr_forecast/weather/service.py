@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from collections import defaultdict
 
+import httpx
 from pydantic import ValidationError
 
 from yr_forecast.config import (
@@ -55,25 +56,33 @@ class WeatherService:
             httpx.HTTPError: If API request fails
             ValidationError: If response format is invalid
         """
-        # Fetch raw forecast data
-        raw_data = await self.client.get_weather_forecast(lat, lon)
+        try:
+            # Fetch raw forecast data
+            raw_data = await self.client.get_weather_forecast(lat, lon)
 
-        # Process timeseries data to get daily temperatures at target time
-        daily_temps = self._process_timeseries_data(raw_data, timezone_str)
+            # Process timeseries data to get daily temperatures at target time
+            daily_temps = self._process_timeseries_data(raw_data, timezone_str)
 
-        # Create location info
-        location = LocationInfo(
-            lat=lat,
-            lon=lon,
-            city=city or self._get_city_name(lat, lon),
-            timezone=timezone_str
-        )
+            # Create location info
+            location = LocationInfo(
+                lat=lat,
+                lon=lon,
+                city=city or self._get_city_name(lat, lon),
+                timezone=timezone_str
+            )
 
-        return WeatherForecast(
-            location=location,
-            timezone=timezone_str,
-            forecast=daily_temps
-        )
+            return WeatherForecast(
+                location=location,
+                timezone=timezone_str,
+                forecast=daily_temps
+            )
+
+        except (ValueError, httpx.HTTPError, ValidationError) as e:
+            logger.error(f"Error getting weather forecast in get_daily_temperatures: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error getting weather forecast in get_daily_temperatures: {e}")
+            raise
 
     def _process_timeseries_data(
         self,
@@ -295,7 +304,10 @@ class WeatherService:
     async def aclose(self):
         """Close the weather client."""
         if self.client:
-            await self.client.aclose()
+            try:
+                await self.client.aclose()
+            except Exception as e:
+                logger.error(f"Error closing weather client: {e}")
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -303,4 +315,7 @@ class WeatherService:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit."""
-        await self.aclose()
+        try:
+            await self.aclose()
+        except Exception as e:
+            logger.error(f"Error during weather service cleanup in __aexit__: {e}")

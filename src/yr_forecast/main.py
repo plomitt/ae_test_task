@@ -22,11 +22,17 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
-    # Startup
-    logger.info("Starting Yr.no Weather Forecast Service")
-    yield
-    # Shutdown
-    logger.info("Shutting down Yr.no Weather Forecast Service")
+    try:
+        logger.info("Starting Yr.no Weather Forecast Service")
+        yield
+    except Exception as e:
+        logger.error(f"Startup error: {e}")
+        raise
+    finally:
+        try:
+            logger.info("Shutting down Yr.no Weather Forecast Service")
+        except Exception as e:
+            logger.error(f"Shutdown error: {e}")
 
 
 def create_app() -> FastAPI:

@@ -81,7 +81,10 @@ class YrWeatherClient:
 
     async def aclose(self):
         """Close the async HTTP client."""
-        await self.client.aclose()
+        try:
+            await self.client.aclose()
+        except Exception as e:
+            logger.error(f"Error closing HTTP client: {e}")
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -89,4 +92,7 @@ class YrWeatherClient:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit."""
-        await self.aclose()
+        try:
+            await self.aclose()
+        except Exception as e:
+            logger.error(f"Error during HTTP client cleanup in __aexit__: {e}")
