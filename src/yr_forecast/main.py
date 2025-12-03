@@ -22,11 +22,17 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
-    # Startup
-    logger.info("Starting Yr.no Weather Forecast Service")
-    yield
-    # Shutdown
-    logger.info("Shutting down Yr.no Weather Forecast Service")
+    try:
+        logger.info("Starting Yr.no Weather Forecast Service")
+        yield
+    except Exception as e:
+        logger.error(f"Startup error: {e}")
+        raise
+    finally:
+        try:
+            logger.info("Shutting down Yr.no Weather Forecast Service")
+        except Exception as e:
+            logger.error(f"Shutdown error: {e}")
 
 
 def create_app() -> FastAPI:
@@ -69,16 +75,19 @@ def create_app() -> FastAPI:
             "message": "Yr.no Weather Forecast Service",
             "docs": "/docs",
             "redoc": "/redoc",
+            "weather": "/weather",
             "health": "/weather/health"
         }
 
     return app
 
 
+# Create app instance for uvicorn
+app = create_app()
+
+
 def main() -> None:
     """Main entry point for the application."""
-    app = create_app()
-
     logger.info(f"Starting server on {HOST}:{PORT}")
     uvicorn.run(
         app,
