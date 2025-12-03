@@ -1,6 +1,8 @@
 """Weather service for processing forecast data."""
 
+import json
 import logging
+import os
 import zoneinfo
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -33,6 +35,46 @@ class WeatherService:
         """
         self.client = client or YrWeatherClient()
 
+    def _save_debug_data(self, data, filename: str):
+        """Save debug data to file with proper datetime serialization.
+
+        Args:
+            data: Data to save (dict, list, or Pydantic models)
+            filename: Name of the file to save
+        """
+        try:
+            # Create debug_data directory if it doesn't exist
+            debug_dir = "debug_data"
+            os.makedirs(debug_dir, exist_ok=True)
+
+            filepath = os.path.join(debug_dir, filename)
+
+            # Custom serializer to handle datetime objects and Pydantic models
+            def json_serializer(obj):
+                if hasattr(obj, 'isoformat'):  # datetime objects
+                    return obj.isoformat()
+                elif hasattr(obj, 'dict'):  # Pydantic models
+                    return obj.dict()
+                elif hasattr(obj, '__dict__'):  # Other objects
+                    return obj.__dict__
+                return str(obj)
+
+            # Handle different data types
+            if hasattr(data, 'dict'):  # Pydantic model
+                json_data = data.dict()
+            elif isinstance(data, list) and data and hasattr(data[0], 'dict'):  # List of Pydantic models
+                json_data = [item.dict() for item in data]
+            else:
+                json_data = data
+
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(json_data, f, indent=2, default=json_serializer, ensure_ascii=False)
+
+            logger.info(f"Debug data saved to {filepath}")
+
+        except Exception as e:
+            logger.error(f"Error saving debug data to {filename}: {e}")
+
     async def get_daily_temperatures(
         self,
         lat: float = DEFAULT_LAT,
@@ -59,6 +101,7 @@ class WeatherService:
         try:
             # Fetch raw forecast data
             raw_data = await self.client.get_weather_forecast(lat, lon)
+            self._save_debug_data(raw_data, "01_raw_data.json")
 
             # Process timeseries data to get daily temperatures at target time
             daily_temps = self._process_timeseries_data(raw_data, timezone_str)
@@ -110,12 +153,15 @@ class WeatherService:
 
             # Enrich timeseries with pre-calculated timestamps
             enriched_timeseries = self._enrich_timeseries_with_timestamps(timeseries, timezone_str)
+            self._save_debug_data(enriched_timeseries, "02_enriched_timeseries.json")
 
             # Group enriched timeseries by date
             daily_data = self._group_by_date(enriched_timeseries)
+            self._save_debug_data(daily_data, "03_daily_grouped_data.json")
 
             # Extract temperature closest to target time for each day
             daily_temps = self._extract_daily_temperatures(daily_data, timezone_str)
+            self._save_debug_data(daily_temps, "04_daily_temperatures.json")
             return daily_temps
 
         except ValidationError as e:
