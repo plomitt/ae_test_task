@@ -22,9 +22,7 @@ A REST API service that provides daily weather forecasts using MET Norway's yr.n
 
 2. **Access the API:**
    - API documentation: http://localhost:8000/docs
-   - Health check: http://localhost:8000/weather/health
-   - Get weather in Belgrade: http://localhost:8000/weather
-   - Get weather at a custom location: http://localhost:8117/weather/?lat=48.8575&lon=2.3514&city=Paris&timezone=Europe%2FParis
+   - Get weather: http://localhost:8000/weather/
 
 ### Local Development
 
@@ -66,13 +64,13 @@ Returns forecast for custom coordinates.
 
 ```bash
 # Get Belgrade forecast (default)
-curl http://localhost:8000/weather
+curl http://localhost:8000/weather/
 
 # Get Paris forecast
-curl "http://localhost:8000/weather?lat=48.8575&lon=2.3514&city=Paris"
+curl "http://localhost:8000/weather/?lat=48.8575&lon=2.3514&city=Paris"
 
 # Get forecast with custom timezone
-curl "http://localhost:8000/weather?lat=52.5200&lon=13.4050&city=Berlin&timezone=Europe/Berlin"
+curl "http://localhost:8000/weather/?lat=52.5200&lon=13.4050&city=Berlin&timezone=Europe/Berlin"
 ```
 
 #### Response Format
