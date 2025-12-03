@@ -1,0 +1,1 @@
+"""Yr.no Weather Forecast Service."""

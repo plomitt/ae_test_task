@@ -1,0 +1,26 @@
+"""Configuration settings for the weather forecast service."""
+
+import os
+from typing import Final
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# API Configuration
+YR_API_BASE_URL: Final[str] = "https://api.met.no/weatherapi/locationforecast/2.0/compact"
+USER_AGENT: Final[str] = "WeatherForecastService/0.1 (user@example.com)"
+
+# Default location (Belgrade)
+DEFAULT_LAT: Final[float] = 44.8125
+DEFAULT_LON: Final[float] = 20.4612
+DEFAULT_CITY: Final[str] = "Belgrade"
+DEFAULT_TIMEZONE: Final[str] = "Europe/Belgrade"
+
+# Server configuration
+HOST: str = os.getenv("HOST", "0.0.0.0")
+PORT: int = int(os.getenv("PORT", "8000"))
+DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
+
+# Target time settings
+TARGET_HOUR: Final[int] = 14 # Target time
+TIME_TOLERANCE_HOURS: Final[int] = 2  # Search within 2 hours of target time
