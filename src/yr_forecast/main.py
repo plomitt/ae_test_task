@@ -14,12 +14,10 @@ from fastapi_cache.backends.redis import RedisBackend
 
 from yr_forecast.api.endpoints import router as weather_router
 from yr_forecast.config import HOST, PORT, DEBUG, REDIS_URL, CACHE_PREFIX
+from yr_forecast.logging_config import configure_logging
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+configure_logging()
 logger = logging.getLogger(__name__)
 
 
