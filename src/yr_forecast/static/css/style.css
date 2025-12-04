@@ -1,0 +1,80 @@
+/* Minimal responsive styles */
+body {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+form > div {
+    margin-bottom: 10px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+input, select {
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+#loading, #result {
+    margin-top: 20px;
+}
+
+.error {
+    color: red;
+}
+
+.forecast-item {
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 5px;
+}
+
+/* Radio button alignment fix */
+/* Override general input styles for radio buttons */
+input[type="radio"] {
+    width: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-width: 16px;
+    min-height: 16px;
+    /* Ensure consistent appearance across browsers */
+    -webkit-appearance: radio;
+    appearance: radio;
+}
+
+/* Container for radio button options */
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Style labels that contain radio input elements */
+.radio-group label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px;
+    margin-bottom: 0 !important;
+    cursor: pointer;
+    /* Override the block display from general label rule */
+}
+
+/* Make radio buttons a fixed size within radio-group */
+.radio-group label input[type="radio"] {
+    width: 16px !important;
+    height: 16px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex-shrink: 0; /* Prevent radio button from shrinking */
+}

@@ -8,7 +8,7 @@ load_dotenv()
 
 # API Configuration
 YR_API_BASE_URL: Final[str] = "https://api.met.no/weatherapi/locationforecast/2.0/compact"
-USER_AGENT: Final[str] = "WeatherForecastService/0.1 (user@example.com)"
+USER_AGENT: Final[str] = "WeatherForecastService/0.1"
 
 # Default location (Belgrade)
 DEFAULT_LAT: Final[float] = 44.8125
@@ -34,3 +34,8 @@ CACHE_PREFIX: str = os.getenv("CACHE_PREFIX", "weather-forecast")
 RATE_LIMIT_REQUESTS_PER_SECOND: int = int(os.getenv("RATE_LIMIT_REQUESTS_PER_SECOND", "20"))
 RATE_LIMIT_REDIS_KEY_PREFIX: str = os.getenv("RATE_LIMIT_REDIS_KEY_PREFIX", "rate_limit")
 RATE_LIMIT_ENABLED: bool = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
+
+# Geocoding configuration
+GEOCODING_USER_AGENT: str = os.getenv("GEOCODING_USER_AGENT", "WeatherForecastService/0.1")
+GEOCODING_CACHE_TTL: int = int(os.getenv("GEOCODING_CACHE_TTL", "86400"))  # 24 hours
+GEOCODING_CACHE_SIZE: int = int(os.getenv("GEOCODING_CACHE_SIZE", "1000"))
