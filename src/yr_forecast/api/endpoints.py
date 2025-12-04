@@ -3,10 +3,14 @@
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query
+from fastapi_cache.decorator import cache
 from pydantic import ValidationError
 
-from yr_forecast.config import DEFAULT_LAT, DEFAULT_LON, DEFAULT_CITY, DEFAULT_TIMEZONE
+from yr_forecast.config import (
+    DEFAULT_LAT, DEFAULT_LON, DEFAULT_CITY, DEFAULT_TIMEZONE,
+    CACHE_EXPIRE_SECONDS
+)
 from yr_forecast.weather.models import WeatherForecast
 from yr_forecast.weather.service import WeatherService
 
@@ -22,6 +26,7 @@ def get_weather_service() -> WeatherService:
 
 
 @router.get("/", response_model=WeatherForecast)
+@cache(expire=CACHE_EXPIRE_SECONDS)
 async def get_weather_forecast(
     lat: Optional[float] = Query(
         None,
@@ -42,8 +47,7 @@ async def get_weather_forecast(
     timezone: Optional[str] = Query(
         DEFAULT_TIMEZONE,
         description="Timezone identifier (default: Europe/Belgrade)"
-    ),
-    weather_service: WeatherService = Depends(get_weather_service)
+    )
 ) -> WeatherForecast:
     """Get weather forecast with daily temperatures at target time.
 
@@ -74,6 +78,7 @@ async def get_weather_forecast(
     try:
         logger.info(f"Getting forecast for lat={lat}, lon={lon}, city={city}")
 
+        weather_service = WeatherService()
         async with weather_service:
             forecast = await weather_service.get_daily_temperatures(
                 lat=lat,
