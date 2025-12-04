@@ -4,12 +4,16 @@ import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+import redis.asyncio as redis
 import uvicorn
+import traceback
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
 
 from yr_forecast.api.endpoints import router as weather_router
-from yr_forecast.config import HOST, PORT, DEBUG
+from yr_forecast.config import HOST, PORT, DEBUG, REDIS_URL, CACHE_PREFIX
 
 # Configure logging
 logging.basicConfig(
@@ -23,10 +27,21 @@ logger = logging.getLogger(__name__)
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
     try:
+        # Initialize Redis cache
+        logger.info(f"Connecting to Redis at {REDIS_URL}")
+        redis_client = redis.from_url(REDIS_URL)
+        FastAPICache.init(RedisBackend(redis_client), prefix=CACHE_PREFIX)
+        logger.info("Cache initialized with Redis backend")
+
+        # Verify cache is working
+        backend = FastAPICache.get_backend()
+        logger.info(f"Cache backend active: {backend}")
+
         logger.info("Starting Yr.no Weather Forecast Service")
         yield
     except Exception as e:
         logger.error(f"Startup error: {e}")
+        logger.error(traceback.format_exc())
         raise
     finally:
         try:
