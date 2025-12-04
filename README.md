@@ -7,6 +7,8 @@ A REST API service that provides daily weather forecasts using MET Norway's yr.n
 - Daily temperature forecasts at ~14:00 (within 2 hours) local time
 - Custom location support (latitude/longitude)
 - Default location: Belgrade, Serbia
+- Global rate limiting to protect yr.no API (20 requests/second)
+- Redis-based caching for improved performance
 - Automatic API documentation (OpenAPI/Swagger)
 - Proper timezone handling
 - Input validation and error handling
@@ -121,16 +123,47 @@ The service returns appropriate HTTP status codes:
 - `200` - Success
 - `400` - Invalid coordinates or parameters
 - `404` - No forecast data available
+- `429` - Rate limit exceeded (too many requests)
 - `500` - Internal server error
 - `502` - Weather service temporarily unavailable
+
+## Rate Limiting
+
+To protect the yr.no API from excessive requests, the service implements global rate limiting:
+
+- **Default limit**: 20 requests per second (configurable)
+- **Scope**: Global across all users
+- **Storage**: Redis
+- **Response**: When rate limited, returns HTTP 429 with `Retry-After` header
+
+### Rate Limit Response Example
+```json
+{
+  "detail": "Rate limit exceeded. Please try again later.",
+  "retry_after": 1
+}
+```
 
 ## Configuration
 
 Environment variables:
 
+### Server Configuration
 - `HOST` - Server host (default: 0.0.0.0)
 - `PORT` - Server port (default: 8000)
 - `DEBUG` - Enable debug mode (default: false)
+
+### Redis Configuration
+- `REDIS_URL` - Redis connection URL (default: redis://localhost:6379)
+
+### Cache Configuration
+- `CACHE_EXPIRE_SECONDS` - Cache TTL in seconds (default: 60)
+- `CACHE_PREFIX` - Redis key prefix for cache (default: weather-forecast)
+
+### Rate Limit Configuration
+- `RATE_LIMIT_ENABLED` - Enable/disable rate limiting (default: true)
+- `RATE_LIMIT_REQUESTS_PER_SECOND` - Max requests per second (default: 20)
+- `RATE_LIMIT_REDIS_KEY_PREFIX` - Redis key prefix for rate limit (default: rate_limit)
 
 ## Development
 
@@ -142,14 +175,19 @@ src/
     ├── __init__.py
     ├── main.py              # FastAPI application
     ├── config.py            # Configuration settings
+    ├── rate_limiter.py      # Redis-based rate limiting logic
+    ├── logging_config.py    # Logging configuration
     ├── weather/
     │   ├── __init__.py
     │   ├── client.py        # yr.no API client
     │   ├── models.py        # Pydantic data models
     │   └── service.py       # Weather data processing
-    └── api/
+    ├── api/
+    │   ├── __init__.py
+    │   └── endpoints.py     # API routes
+    └── middleware/
         ├── __init__.py
-        └── endpoints.py     # API routes
+        └── rate_limit.py    # FastAPI rate limit middleware
 ```
 
 ## License

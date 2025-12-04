@@ -13,8 +13,12 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 
 from yr_forecast.api.endpoints import router as weather_router
-from yr_forecast.config import HOST, PORT, DEBUG, REDIS_URL, CACHE_PREFIX
+from yr_forecast.config import (
+    HOST, PORT, DEBUG, REDIS_URL, CACHE_PREFIX,
+    RATE_LIMIT_REQUESTS_PER_SECOND
+)
 from yr_forecast.logging_config import configure_logging
+from yr_forecast.middleware.rate_limit import RateLimitMiddleware
 
 # Configure logging
 configure_logging()
@@ -72,6 +76,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Add rate limiting middleware
+    app.add_middleware(RateLimitMiddleware, calls=RATE_LIMIT_REQUESTS_PER_SECOND)
 
     # Include API routers
     app.include_router(weather_router)

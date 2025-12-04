@@ -16,6 +16,7 @@ python-dotenv = "^1.2.1"
 uvicorn = {extras = ["standard"], version = "^0.38.0"}
 cachetools = "^6.2.2"
 fastapi-cache2 = {extras = ["redis"], version = "^0.2.2"}
+aiohttp = "^3.13.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.1"

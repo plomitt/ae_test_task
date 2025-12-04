@@ -29,3 +29,8 @@ TIME_TOLERANCE_HOURS: int = int(os.getenv("TIME_TOLERANCE_HOURS", "2"))  # Searc
 REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
 CACHE_EXPIRE_SECONDS: int = int(os.getenv("CACHE_EXPIRE_SECONDS", "60"))  # 60 seconds default
 CACHE_PREFIX: str = os.getenv("CACHE_PREFIX", "weather-forecast")
+
+# Rate limiting configuration
+RATE_LIMIT_REQUESTS_PER_SECOND: int = int(os.getenv("RATE_LIMIT_REQUESTS_PER_SECOND", "20"))
+RATE_LIMIT_REDIS_KEY_PREFIX: str = os.getenv("RATE_LIMIT_REDIS_KEY_PREFIX", "rate_limit")
+RATE_LIMIT_ENABLED: bool = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
