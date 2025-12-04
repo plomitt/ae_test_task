@@ -3,12 +3,14 @@
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+import os
 
 import redis.asyncio as redis
 import uvicorn
 import traceback
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 
@@ -83,10 +85,22 @@ def create_app() -> FastAPI:
     # Include API routers
     app.include_router(weather_router)
 
-    # Root endpoint
+    # Get static files path
+    static_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+
+    # Mount static files
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+    # Serve the web interface
     @app.get("/", tags=["root"])
-    async def root() -> dict:
-        """Root endpoint with basic service information.
+    async def root():
+        """Root endpoint serving the web interface."""
+        from fastapi.responses import FileResponse
+        return FileResponse(os.path.join(static_path, "index.html"))
+
+    @app.get("/api", tags=["root"])
+    async def api_info() -> dict:
+        """API information endpoint.
 
         Returns:
             Basic service information
