@@ -11,16 +11,37 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         const params = new URLSearchParams();
 
-        const lat = formData.get('lat');
-        const lon = formData.get('lon');
-        const city = formData.get('city');
-        const timezone = formData.get('timezone');
+        // Get location type
+        const locationType = formData.get('locationType');
 
-        // Add non-empty parameters
-        if (lat) params.append('lat', lat);
-        if (lon) params.append('lon', lon);
-        if (city) params.append('city', city);
-        if (timezone) params.append('timezone', timezone);
+        // Get location parameters based on type
+        if (locationType === 'coordinates') {
+            const lat = formData.get('lat');
+            const lon = formData.get('lon');
+
+            // Validate coordinates
+            if (!lat || !lon) {
+                displayError('Both latitude and longitude are required when using coordinates');
+                return;
+            }
+
+            params.append('lat', lat);
+            params.append('lon', lon);
+        } else {
+            const city = formData.get('city');
+
+            // Validate city
+            if (!city || !city.trim()) {
+                displayError('City name is required when using city name option');
+                return;
+            }
+
+            params.append('city', city.trim());
+        }
+
+        // Add timezone option
+        const timezoneOption = formData.get('timezoneOption');
+        params.append('timezone_option', timezoneOption);
 
         // Show loading
         loading.style.display = 'block';

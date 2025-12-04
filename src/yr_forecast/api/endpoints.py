@@ -32,66 +32,57 @@ async def get_weather_forecast(
         None,
         ge=-90,
         le=90,
-        description="Latitude in decimal degrees (default: Belgrade)"
+        description="Latitude in decimal degrees (use with lon)"
     ),
     lon: Optional[float] = Query(
         None,
         ge=-180,
         le=180,
-        description="Longitude in decimal degrees (default: Belgrade)"
+        description="Longitude in decimal degrees (use with lat)"
     ),
     city: Optional[str] = Query(
         None,
-        description="City name (optional, for display purposes)"
+        description="City name (alternative to lat/lon, not both)"
     ),
-    timezone: Optional[str] = Query(
-        DEFAULT_TIMEZONE,
-        description="Timezone identifier (default: Europe/Belgrade)"
+    timezone_option: str = Query(
+        "utc",
+        regex="^(utc|local)$",
+        description="Timezone option: 'utc' (default) or 'local' (auto-detected)"
     )
 ) -> WeatherForecast:
     """Get weather forecast with daily temperatures at target time.
 
-    If no coordinates are provided, returns forecast for Belgrade, Serbia.
-
     Args:
-        lat: Latitude in decimal degrees
-        lon: Longitude in decimal degrees
-        city: Optional city name for display
-        timezone: Timezone identifier for local time conversion
+        lat: Latitude in decimal degrees (must provide with lon)
+        lon: Longitude in decimal degrees (must provide with lat)
+        city: City name as alternative to lat/lon
+        timezone_option: 'utc' (default) or 'local' for auto-detected timezone
 
     Returns:
         WeatherForecast with daily temperature data
 
     Raises:
-        HTTPException: If coordinates are invalid or API request fails
+        HTTPException: If parameters are invalid or API request fails
     """
-    # Use default coordinates if not provided
-    if lat is None:
-        lat = DEFAULT_LAT
-        
-    if lon is None:
-        lon = DEFAULT_LON
-
-    if city is None:
-        city = DEFAULT_CITY
+    # Validate parameters
+    lat, lon, city = validate_weather_parameters(lat, lon, city)
 
     try:
-        logger.info(f"Getting forecast for lat={lat}, lon={lon}, city={city}")
-
-        weather_service = WeatherService()
+        # Get forecast
+        weather_service = get_weather_service()
         async with weather_service:
-            forecast = await weather_service.get_daily_temperatures(
+            forecast = await weather_service.get_forecast_with_geocoding(
                 lat=lat,
                 lon=lon,
                 city=city,
-                timezone_str=timezone
+                timezone_option=timezone_option
             )
 
         logger.info(f"Successfully retrieved forecast with {len(forecast.forecast)} days")
         return forecast
 
     except ValueError as e:
-        logger.error(f"Invalid input: {e}")
+        logger.error(f"Error getting forecast: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
     except ValidationError as e:
@@ -101,6 +92,51 @@ async def get_weather_forecast(
     except Exception as e:
         logger.error(f"Unexpected error getting forecast: {e}")
         raise HTTPException(status_code=502, detail="Weather service temporarily unavailable")
+
+def validate_weather_parameters(
+    lat: Optional[float],
+    lon: Optional[float],
+    city: Optional[str]
+) -> tuple[float, float, str]:
+    """
+    Validate and normalize weather request parameters.
+
+    Args:
+        lat: Latitude in decimal degrees
+        lon: Longitude in decimal degrees
+        city: City name
+
+    Returns:
+        Tuple of (latitude, longitude, city)
+
+    Raises:
+        HTTPException: If validation fails
+    """
+    # Validate mutual exclusivity of location parameters
+    has_coordinates = lat is not None or lon is not None
+    has_city = city is not None
+
+    if has_coordinates and has_city:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot provide both coordinates and city name. Use either lat/lon OR city."
+        )
+
+    if not has_coordinates and not has_city:
+        # Use default location
+        lat = DEFAULT_LAT
+        lon = DEFAULT_LON
+        city = DEFAULT_CITY
+        logger.info(f"Using default location: {city}")
+    elif has_coordinates:
+        # Ensure both coordinates are provided
+        if lat is None or lon is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Both latitude and longitude must be provided when using coordinates."
+            )
+
+    return lat, lon, city
 
 
 @router.get("/health")
