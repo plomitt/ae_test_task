@@ -19,24 +19,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const lat = formData.get('lat');
             const lon = formData.get('lon');
 
-            // Validate coordinates
-            if (!lat || !lon) {
-                displayError('Both latitude and longitude are required when using coordinates');
-                return;
-            }
-
-            params.append('lat', lat);
-            params.append('lon', lon);
+            // Allow empty coordinates - backend will use defaults
+            if (lat) params.append('lat', lat);
+            if (lon) params.append('lon', lon);
         } else {
             const city = formData.get('city');
 
-            // Validate city
-            if (!city || !city.trim()) {
-                displayError('City name is required when using city name option');
-                return;
+            // Allow empty city - backend will use defaults
+            if (city && city.trim()) {
+                params.append('city', city.trim());
             }
-
-            params.append('city', city.trim());
         }
 
         // Add timezone option
